@@ -1,0 +1,20 @@
+# FastAPI and server
+fastapi
+uvicorn[standard]
+python-multipart
+
+# Database
+pymysql
+
+# Authentication & Security
+python-jose[cryptography]
+passlib[bcrypt]
+python-dotenv
+
+# Validation
+pydantic
+email-validator
+
+# Testing (optional)
+pytest
+httpx

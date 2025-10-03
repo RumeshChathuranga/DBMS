@@ -1,0 +1,1 @@
+import { MainLayout } from "../components/layout"; export default function ReportsPage() { return <MainLayout><div><h1 className="text-3xl font-bold">Reports</h1><p className="text-gray-600 mt-2">View analytics and reports</p></div></MainLayout>; }
