@@ -174,11 +174,20 @@ const ReservationsPage = () => {
   // Handle check-out
   const handleCheckOut = async (bookingId: number) => {
     try {
-      await bookingService.checkOut(bookingId);
+      console.log('Starting checkout for booking:', bookingId);
+      const result = await bookingService.checkOut(bookingId);
+      console.log('Checkout successful:', result);
       toast.success('Guest checked out successfully');
       fetchBookings();
     } catch (error: any) {
-      toast.error(error.response?.data?.detail || 'Check-out failed');
+      console.error('Checkout failed:', error);
+      console.error('Error details:', {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message
+      });
+      const errorMessage = error.response?.data?.detail || error.response?.data?.message || error.message || 'Check-out failed';
+      toast.error(errorMessage);
     }
   };
 

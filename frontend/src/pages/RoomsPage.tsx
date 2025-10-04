@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { MainLayout } from '../components/layout';
-import { Card, Button, Badge } from '../components/common';
+import { Card, Badge } from '../components/common';
 import { Hotel, Users, DollarSign, Calendar } from 'lucide-react';
 import { roomService } from '../services';
 import type { Room, RoomType, Branch } from '../types';

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { MainLayout } from '../components/layout';
 import { Card, Button, Table, Modal, Input } from '../components/common';
 import { Plus, Search, Edit, User } from 'lucide-react';

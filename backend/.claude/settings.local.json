@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//home/rumeshchathuranga/Documents/DBMS_Claude/frontend/src/services/**)",
+      "Read(//home/rumeshchathuranga/Documents/DBMS_Claude/frontend/src/components/common/**)",
+      "Read(//home/rumeshchathuranga/Documents/DBMS_Claude/frontend/**)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

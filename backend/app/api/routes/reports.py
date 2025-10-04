@@ -18,6 +18,73 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/reports", tags=["Reports"])
 
 
+@router.get("/recent-activities", response_model=List[Dict[str, Any]])
+async def get_recent_activities(
+    limit: int = Query(10, ge=1, le=50),
+    branch_id: int = Query(None),
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    """
+    Get recent system activities/logs
+    
+    Available to: All authenticated users
+    """
+    try:
+        from app.database.connection import DatabaseOperations
+        from app.database.queries import LogQueries
+        
+        # Use user's branch if not specified
+        if branch_id is None:
+            branch_id = current_user.get('branchID')
+        
+        # Fetch recent logs
+        if branch_id is None:
+            # Admin user - get logs from all branches
+            query = """
+                SELECT l.logID, l.event_time, l.logAction, l.logDescription,
+                       u.username, u.first_name, u.last_name,
+                       br.branchLocation
+                FROM Log l
+                LEFT JOIN User_Account u ON l.userID = u.userID
+                LEFT JOIN Branch br ON l.branchID = br.branchID
+                ORDER BY l.event_time DESC
+                LIMIT %s
+            """
+            recent_logs = DatabaseOperations.execute_query(
+                query, (limit,), fetch_all=True
+            )
+        else:
+            # Regular user - get logs from specific branch
+            recent_logs = DatabaseOperations.execute_query(
+                LogQueries.GET_RECENT_LOGS,
+                (branch_id, limit),
+                fetch_all=True
+            )
+        
+        activities = []
+        for log in recent_logs:
+            activity = {
+                "id": f"log-{log['logID']}",
+                "type": log['logAction'].lower() if log['logAction'] else 'system',
+                "title": log['logAction'] or 'System Activity',
+                "description": log['logDescription'] or 'System activity logged',
+                "timestamp": log['event_time'].isoformat() if log['event_time'] else None,
+                "user": f"{log['first_name'] or ''} {log['last_name'] or ''}".strip() or log['username'] or 'System',
+                "branch": log['branchLocation'] or 'Unknown'
+            }
+            activities.append(activity)
+        
+        logger.info(f"Retrieved {len(activities)} recent activities for branch {branch_id}")
+        return activities
+        
+    except Exception as e:
+        logger.error(f"Failed to get recent activities: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve recent activities"
+        )
+
+
 @router.post("/occupancy", dependencies=[Depends(require_role("Admin", "Manager"))])
 async def get_occupancy_report(
     query: OccupancyReportQuery,

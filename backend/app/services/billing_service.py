@@ -264,7 +264,7 @@ class BillingService:
                 raise ValueError(f"Payment amount exceeds balance due ({balance_due})")
             
             with Database.get_db_connection() as conn:
-                cursor = conn.cursor(dictionary=True)
+                cursor = conn.cursor()
                 
                 # Create payment record
                 cursor.execute(

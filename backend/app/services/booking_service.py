@@ -280,7 +280,7 @@ class BookingService:
         """Check in a guest"""
         try:
             with Database.get_db_connection() as conn:
-                cursor = conn.cursor(dictionary=True)
+                cursor = conn.cursor()
                 
                 booking = BookingService.get_booking_by_id(booking_id)
                 
@@ -326,7 +326,7 @@ class BookingService:
         """Check out a guest"""
         try:
             with Database.get_db_connection() as conn:
-                cursor = conn.cursor(dictionary=True)
+                cursor = conn.cursor()
                 
                 booking = BookingService.get_booking_by_id(booking_id)
                 

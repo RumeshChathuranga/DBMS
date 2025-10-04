@@ -135,7 +135,7 @@ class RoomQueries:
     
     # Critical query: Check room availability for date range
     CHECK_ROOM_AVAILABILITY = """
-        SELECT r.roomID, r.roomNo, r.roomStatus,
+        SELECT r.roomID, r.branchID, r.typeID, r.roomNo, r.roomStatus,
                rt.typeName, rt.capacity, rt.currRate
         FROM Room r
         JOIN Room_Type rt ON r.typeID = rt.typeID

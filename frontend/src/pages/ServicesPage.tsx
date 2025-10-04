@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { MainLayout } from '../components/layout';
 import { Card, Button, Modal, Input, Table } from '../components/common';
-import { Plus, Utensils } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { serviceService, bookingService } from '../services';
 import type { Service, ServiceUsageCreate, Booking } from '../types';
 import { toast } from 'react-toastify';

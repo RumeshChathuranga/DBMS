@@ -11,7 +11,10 @@ class GuestService {
   }
 
   async searchGuests(query: string, page = 1, pageSize = 20): Promise<Guest[]> {
-    return await api.get<Guest[]>('/guests', { query, page, page_size: pageSize });
+    console.log('Searching guests with query:', query);
+    const result = await api.get<Guest[]>('/guests/search', { query, page, page_size: pageSize });
+    console.log('Guest search results:', result);
+    return result;
   }
 
   async updateGuest(id: number, data: Partial<GuestCreate>): Promise<ApiResponse> {
