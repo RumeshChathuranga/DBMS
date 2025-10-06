@@ -462,7 +462,7 @@ class ReportQueries:
     
     # Room occupancy report
     ROOM_OCCUPANCY_BY_DATE_RANGE = """
-        SELECT b.branchID, br.branchLocation,
+        SELECT b.branchID, b.branchLocation,
                COUNT(DISTINCT bk.roomID) as occupiedRooms,
                COUNT(DISTINCT r.roomID) as totalRooms,
                ROUND((COUNT(DISTINCT bk.roomID) / COUNT(DISTINCT r.roomID)) * 100, 2) as occupancyRate
@@ -473,12 +473,12 @@ class ReportQueries:
             AND bk.checkInDate <= %s 
             AND bk.checkOutDate >= %s
         WHERE b.branchID = %s OR %s = 0
-        GROUP BY b.branchID, br.branchLocation
+        GROUP BY b.branchID, b.branchLocation
     """
     
     # Revenue report by branch
     MONTHLY_REVENUE_BY_BRANCH = """
-        SELECT b.branchID, br.branchLocation,
+        SELECT b.branchID, b.branchLocation,
                SUM(i.roomCharges) as roomRevenue,
                SUM(i.serviceCharges) as serviceRevenue,
                SUM(i.roomCharges + i.serviceCharges) as totalRevenue,
@@ -489,7 +489,7 @@ class ReportQueries:
         WHERE YEAR(bk.checkInDate) = %s 
         AND MONTH(bk.checkInDate) = %s
         AND (b.branchID = %s OR %s = 0)
-        GROUP BY b.branchID, br.branchLocation
+        GROUP BY b.branchID, b.branchLocation
         ORDER BY totalRevenue DESC
     """
     
