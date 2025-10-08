@@ -181,4 +181,128 @@ BEGIN
 END//
 DELIMITER ;
 
+-- Trigger 9: Update invoice service charges when service is added
+DELIMITER //
+CREATE TRIGGER trg_update_service_charges_insert
+AFTER INSERT ON Service_Usage
+FOR EACH ROW
+BEGIN
+    DECLARE service_cost DECIMAL(15,2);
+    
+    -- Calculate the cost for this service
+    SET service_cost = NEW.rate * NEW.quantity;
+    
+    -- Update the invoice service charges
+    UPDATE Invoice
+    SET serviceCharges = serviceCharges + service_cost
+    WHERE bookingID = NEW.bookingID;
+    
+    -- Log the service addition
+    INSERT INTO Log (branchID, userID, bookingID, logAction, logDescription)
+    SELECT b.branchID, NULL, NEW.bookingID, 'Update',
+           CONCAT('Service charge added: ', service_cost)
+    FROM Booking b
+    WHERE b.bookingID = NEW.bookingID;
+END//
+DELIMITER ;
+
+-- Trigger 10: Update invoice service charges when service is updated
+DELIMITER //
+CREATE TRIGGER trg_update_service_charges_update
+AFTER UPDATE ON Service_Usage
+FOR EACH ROW
+BEGIN
+    DECLARE old_cost DECIMAL(15,2);
+    DECLARE new_cost DECIMAL(15,2);
+    DECLARE cost_difference DECIMAL(15,2);
+    
+    -- Calculate old and new costs
+    SET old_cost = OLD.rate * OLD.quantity;
+    SET new_cost = NEW.rate * NEW.quantity;
+    SET cost_difference = new_cost - old_cost;
+    
+    -- Update the invoice service charges
+    UPDATE Invoice
+    SET serviceCharges = serviceCharges + cost_difference
+    WHERE bookingID = NEW.bookingID;
+    
+    -- Log the service update
+    INSERT INTO Log (branchID, userID, bookingID, logAction, logDescription)
+    SELECT b.branchID, NULL, NEW.bookingID, 'Update',
+           CONCAT('Service charge updated. Difference: ', cost_difference)
+    FROM Booking b
+    WHERE b.bookingID = NEW.bookingID;
+END//
+DELIMITER ;
+
+-- Trigger 11: Update invoice service charges when service is removed
+DELIMITER //
+CREATE TRIGGER trg_update_service_charges_delete
+AFTER DELETE ON Service_Usage
+FOR EACH ROW
+BEGIN
+    DECLARE removed_cost DECIMAL(15,2);
+    
+    -- Calculate the cost that was removed
+    SET removed_cost = OLD.rate * OLD.quantity;
+    
+    -- Update the invoice service charges
+    UPDATE Invoice
+    SET serviceCharges = serviceCharges - removed_cost
+    WHERE bookingID = OLD.bookingID;
+    
+    -- Log the service removal
+    INSERT INTO Log (branchID, userID, bookingID, logAction, logDescription)
+    SELECT b.branchID, NULL, OLD.bookingID, 'Delete',
+           CONCAT('Service charge removed: ', removed_cost)
+    FROM Booking b
+    WHERE b.bookingID = OLD.bookingID;
+END//
+DELIMITER ;
+
+-- Trigger 12: Update invoice when late checkout charge is added
+DELIMITER //
+CREATE TRIGGER trg_update_late_checkout_charges
+AFTER INSERT ON Late_Checkout
+FOR EACH ROW
+BEGIN
+    -- Update the invoice service charges with late checkout fee
+    UPDATE Invoice
+    SET serviceCharges = serviceCharges + IFNULL(NEW.amount, 0)
+    WHERE bookingID = NEW.bookingID;
+    
+    -- Log the late checkout charge
+    INSERT INTO Log (branchID, userID, bookingID, logAction, logDescription)
+    SELECT b.branchID, NULL, NEW.bookingID, 'Update',
+           CONCAT('Late checkout charge added: ', IFNULL(NEW.amount, 0))
+    FROM Booking b
+    WHERE b.bookingID = NEW.bookingID;
+END//
+DELIMITER ;
+
+-- Trigger 13: Update invoice when late checkout charge is updated
+DELIMITER //
+CREATE TRIGGER trg_update_late_checkout_charges_update
+AFTER UPDATE ON Late_Checkout
+FOR EACH ROW
+BEGIN
+    DECLARE charge_difference DECIMAL(10,2);
+    
+    -- Calculate the difference in late checkout charges
+    SET charge_difference = IFNULL(NEW.amount, 0) - IFNULL(OLD.amount, 0);
+    
+    -- Update the invoice service charges
+    UPDATE Invoice
+    SET serviceCharges = serviceCharges + charge_difference
+    WHERE bookingID = NEW.bookingID;
+    
+    -- Log the late checkout charge update
+    INSERT INTO Log (branchID, userID, bookingID, logAction, logDescription)
+    SELECT b.branchID, NULL, NEW.bookingID, 'Update',
+           CONCAT('Late checkout charge updated. Difference: ', charge_difference)
+    FROM Booking b
+    WHERE b.bookingID = NEW.bookingID;
+END//
+DELIMITER ;
+
 SELECT 'Triggers created successfully!' as Status;
