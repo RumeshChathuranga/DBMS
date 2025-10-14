@@ -110,6 +110,32 @@ class TokenResponse(BaseModel):
     user: UserResponse
 
 
+# ============= Password Reset Schemas =============
+
+class ForgotPasswordRequest(BaseModel):
+    """Request to initiate password reset via email"""
+    email: EmailStr
+
+
+class ForgotPasswordResponse(BaseModel):
+    """Generic response to avoid user enumeration"""
+    success: bool
+    message: str
+
+
+class ResetPasswordRequest(BaseModel):
+    """Submit OTP + new password"""
+    email: EmailStr
+    otp: str = Field(..., min_length=6, max_length=6, pattern=r"^[0-9]{6}$")
+    new_password: str = Field(..., min_length=8)
+
+    @validator('new_password')
+    def strong_password(cls, v):  # basic check; extend as needed
+        if len(v) < 8:
+            raise ValueError("Password must be at least 8 characters")
+        return v
+
+
 # ============= Guest Schemas =============
 
 class GuestCreate(BaseModel):

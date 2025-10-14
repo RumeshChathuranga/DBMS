@@ -21,6 +21,13 @@ class UserQueries:
         FROM User_Account 
         WHERE userID = %s
     """
+
+    GET_USER_BY_EMAIL = """
+        SELECT userID, username, userPassword, userRole, branchID,
+               first_name, last_name, email, phone, reset_token, reset_expires
+        FROM User_Account
+        WHERE email = %s
+    """
     
     CREATE_USER = """
         INSERT INTO User_Account 
@@ -31,6 +38,24 @@ class UserQueries:
     UPDATE_USER = """
         UPDATE User_Account 
         SET first_name = %s, last_name = %s, phone = %s, email = %s
+        WHERE userID = %s
+    """
+
+    SET_RESET_OTP = """
+        UPDATE User_Account
+        SET reset_token = %s, reset_expires = %s
+        WHERE userID = %s
+    """
+
+    CLEAR_RESET_OTP = """
+        UPDATE User_Account
+        SET reset_token = NULL, reset_expires = NULL
+        WHERE userID = %s
+    """
+
+    UPDATE_PASSWORD_AND_CLEAR_OTP = """
+        UPDATE User_Account
+        SET userPassword = %s, reset_token = NULL, reset_expires = NULL
         WHERE userID = %s
     """
     

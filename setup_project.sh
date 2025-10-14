@@ -298,7 +298,7 @@ cat > backend/.env.example << 'EOF'
 DB_HOST=localhost
 DB_PORT=3306
 DB_USER=root
-DB_PASSWORD=your_password_here
+DB_PASSWORD=Mpk26#
 DB_NAME=hrgsms_db
 
 # JWT Configuration

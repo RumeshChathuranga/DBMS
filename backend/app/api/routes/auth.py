@@ -7,7 +7,8 @@ from typing import Dict, Any
 import logging
 
 from app.models.schemas import (
-    UserLogin, UserCreate, TokenResponse, UserResponse, ResponseModel
+    UserLogin, UserCreate, TokenResponse, UserResponse, ResponseModel,
+    ForgotPasswordRequest, ForgotPasswordResponse, ResetPasswordRequest
 )
 from app.services.auth_service import AuthService
 from app.api.dependencies import get_current_user, require_role
@@ -103,3 +104,34 @@ async def verify_token(current_user: Dict[str, Any] = Depends(get_current_user))
             "role": current_user['userRole']
         }
     }
+
+
+@router.post("/forgot-password", response_model=ForgotPasswordResponse)
+async def forgot_password(payload: ForgotPasswordRequest):
+    """Initiate password reset by generating OTP and emailing user.
+    Always return generic success message to prevent user enumeration."""
+    try:
+        # Fire and forget style; service handles silently if email not found
+        AuthService.initiate_password_reset(payload.email)
+    except Exception as e:  # Log but do not leak
+        logger.error(f"Forgot password error: {e}")
+    return ForgotPasswordResponse(success=True, message="If the email exists, an OTP has been sent.")
+
+
+@router.post("/reset-password", response_model=ResponseModel)
+async def reset_password(payload: ResetPasswordRequest):
+    """Verify OTP and set new password"""
+    try:
+        success = AuthService.reset_password_with_otp(
+            email=payload.email,
+            otp=payload.otp,
+            new_password=payload.new_password
+        )
+        if not success:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired OTP")
+        return {"success": True, "message": "Password reset successful"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Reset password error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to reset password")

@@ -149,6 +149,24 @@ The system follows a layered architecture pattern:
 - Role-based access control
 - Input validation and sanitization
 - CORS configuration for secure API access
+- Secure password reset with time-limited OTP (6-digit, 10 min expiry)
+
+### Password Reset Flow (OTP)
+1. User clicks "Forgot Password?" on login screen.
+2. Enters email; backend generates 6-digit OTP (valid 10 minutes) and emails it (generic success message returned to avoid user enumeration).
+3. User enters OTP + new password on reset form.
+4. Backend verifies OTP & expiry, hashes new password, clears OTP fields.
+5. User signs in with new password.
+
+Environment variables required for email sending (backend `.env`):
+```
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USER=your_email@gmail.com
+EMAIL_PASSWORD=your_app_password
+PASSWORD_RESET_OTP_EXP_MIN=10
+```
+If email variables are missing, the system will still generate OTP (logged) but skip sending the email.
 
 ## 🚀 Development
 
