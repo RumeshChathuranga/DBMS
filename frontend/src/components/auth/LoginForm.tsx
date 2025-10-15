@@ -78,7 +78,7 @@ const LoginForm = () => {
             <div className="flex justify-end -mt-4">
               <button
                 type="button"
-                onClick={() => navigate('/forgot-password')}
+                onClick={() => navigate("/forgot-password")}
                 className="text-sm text-blue-600 hover:underline"
               >
                 Forgot Password?

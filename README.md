@@ -26,18 +26,21 @@ HRGSMS is a full-stack hotel management system designed to streamline hotel oper
 ## 🚀 Quick Start
 
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/RumeshChathuranga/DBMS.git
    cd DBMS
    ```
 
 2. **Set up the project structure**
+
    ```bash
    chmod +x setup_project.sh
    ./setup_project.sh
    ```
 
 3. **Set up the database**
+
    ```bash
    cd database
    chmod +x reset_database.sh
@@ -45,6 +48,7 @@ HRGSMS is a full-stack hotel management system designed to streamline hotel oper
    ```
 
 4. **Start the backend**
+
    ```bash
    cd backend
    pip install -r requirements.txt
@@ -113,30 +117,35 @@ The system follows a layered architecture pattern:
 ## 🔧 Features
 
 ### 🏨 Room Management
+
 - Real-time room availability tracking
 - Room type configuration (Single, Double, Suite, etc.)
 - Multi-branch room inventory management
 - Room status updates (Available, Occupied, Maintenance)
 
 ### 📅 Reservation System
+
 - Online booking with real-time availability
 - Check-in/check-out management
 - Reservation modifications and cancellations
 - Guest history tracking
 
 ### 👥 Guest Services
+
 - Guest profile management
 - Service requests and fulfillment
 - Loyalty program integration
 - Communication history
 
 ### 💰 Billing & Payments
+
 - Automated billing calculations
 - Multiple payment method support
 - Invoice generation and management
 - Revenue tracking and reporting
 
 ### 📊 Reporting & Analytics
+
 - Occupancy reports by branch and time period
 - Revenue analysis and forecasting
 - Guest satisfaction metrics
@@ -152,6 +161,7 @@ The system follows a layered architecture pattern:
 - Secure password reset with time-limited OTP (6-digit, 10 min expiry)
 
 ### Password Reset Flow (OTP)
+
 1. User clicks "Forgot Password?" on login screen.
 2. Enters email; backend generates 6-digit OTP (valid 10 minutes) and emails it (generic success message returned to avoid user enumeration).
 3. User enters OTP + new password on reset form.
@@ -159,6 +169,7 @@ The system follows a layered architecture pattern:
 5. User signs in with new password.
 
 Environment variables required for email sending (backend `.env`):
+
 ```
 EMAIL_HOST=smtp.gmail.com
 EMAIL_PORT=587
@@ -166,17 +177,20 @@ EMAIL_USER=your_email@gmail.com
 EMAIL_PASSWORD=your_app_password
 PASSWORD_RESET_OTP_EXP_MIN=10
 ```
+
 If email variables are missing, the system will still generate OTP (logged) but skip sending the email.
 
 ## 🚀 Development
 
 ### Prerequisites
+
 - Python 3.13+
 - Node.js 18+
 - MySQL 8.0+
 - Git
 
 ### Development Workflow
+
 1. Make changes to your code
 2. Test locally using the development servers
 3. Run tests (if available)
@@ -184,13 +198,15 @@ If email variables are missing, the system will still generate OTP (logged) but 
 5. Push to your branch and create pull requests
 
 ### API Documentation
+
 Once the backend is running, visit:
+
 - Swagger UI: `http://localhost:8000/docs`
 - ReDoc: `http://localhost:8000/redoc`
 
 ## 📱 Screenshots & Demos
 
-*Screenshots and demo links will be added as the application develops*
+_Screenshots and demo links will be added as the application develops_
 
 ## 🤝 Contributing
 
@@ -212,6 +228,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## 🆘 Support
 
 For support and questions:
+
 - Create an issue in the GitHub repository
 - Check the documentation in the `docs/` folder
 - Review the API documentation at `/docs` endpoint
