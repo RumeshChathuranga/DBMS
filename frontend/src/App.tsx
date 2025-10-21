@@ -1,8 +1,15 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import { AuthProvider, useAuth } from './context/AuthContext';
-import LoginForm from './components/auth/LoginForm';
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { AuthProvider, useAuth } from "./context/AuthContext";
+import LoginForm from "./components/auth/LoginForm";
+import ForgotPassword from "./components/auth/ForgotPassword";
+import ResetPassword from "./components/auth/ResetPassword";
 import {
   DashboardPage,
   ReservationsPage,
@@ -11,7 +18,7 @@ import {
   ServicesPage,
   BillingPage,
   ReportsPage,
-} from './pages';
+} from "./pages";
 
 // Protected Route Component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -22,7 +29,11 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 // Public Route (redirect if authenticated)
 const PublicRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated } = useAuth();
-  return !isAuthenticated ? <>{children}</> : <Navigate to="/dashboard" replace />;
+  return !isAuthenticated ? (
+    <>{children}</>
+  ) : (
+    <Navigate to="/dashboard" replace />
+  );
 };
 
 function AppRoutes() {
@@ -34,6 +45,22 @@ function AppRoutes() {
         element={
           <PublicRoute>
             <LoginForm />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/forgot-password"
+        element={
+          <PublicRoute>
+            <ForgotPassword />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/reset-password"
+        element={
+          <PublicRoute>
+            <ResetPassword />
           </PublicRoute>
         }
       />
@@ -98,7 +125,7 @@ function AppRoutes() {
 
       {/* Redirect root to dashboard */}
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
-      
+
       {/* 404 */}
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>

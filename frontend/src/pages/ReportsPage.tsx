@@ -450,7 +450,7 @@ const ReportsPage = () => {
                 disabled={loading}
                 className="btn-primary flex items-center gap-2"
               >
-                <TrendingUp size={20} />
+                <TrendingUp size={15} />
                 {loading ? "Generating..." : "Generate Report"}
               </button>
 
@@ -462,16 +462,16 @@ const ReportsPage = () => {
                   <div className="flex gap-2">
                     <button
                       onClick={exportReport}
-                      className="btn-secondary flex items-center gap-2"
+                      className="btn-primary flex items-center gap-2"
                     >
-                      <Download size={20} />
+                      <Download size={15} />
                       Export JSON
                     </button>
                     <button
                       onClick={exportReportAsCSV}
-                      className="btn-secondary flex items-center gap-2"
+                      className="btn-primary flex items-center gap-2"
                     >
-                      <FileText size={20} />
+                      <FileText size={15} />
                       Export CSV
                     </button>
                   </div>

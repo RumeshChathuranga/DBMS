@@ -9,6 +9,11 @@ from app.database.connection import DatabaseOperations
 from app.database.queries import UserQueries, LogQueries
 from app.utils.security import PasswordHandler, TokenHandler
 from app.utils.validators import Validators
+from datetime import datetime, timedelta
+import random
+import smtplib
+from email.message import EmailMessage
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -108,6 +113,84 @@ class AuthService:
             "token_type": "bearer",
             "user": user
         }
+
+    # ===== Password Reset (OTP) =====
+    @staticmethod
+    def _generate_otp() -> str:
+        return f"{random.randint(0, 999999):06d}"
+
+    @staticmethod
+    def _send_otp_email(to_email: str, otp: str):
+        """Send OTP email. Basic SMTP implementation; replace with robust mailer as needed."""
+        host = os.getenv("EMAIL_HOST")
+        port = int(os.getenv("EMAIL_PORT", "587"))
+        user = os.getenv("EMAIL_USER")
+        password = os.getenv("EMAIL_PASSWORD")
+        if not (host and user and password):
+            logger.warning("Email credentials not fully configured; skipping actual send")
+            return
+        try:
+            msg = EmailMessage()
+            msg["Subject"] = "Your Password Reset OTP"
+            msg["From"] = user
+            msg["To"] = to_email
+            msg.set_content(f"Your OTP is: {otp}\nIt expires in 10 minutes.")
+            with smtplib.SMTP(host, port) as server:
+                server.starttls()
+                server.login(user, password)
+                server.send_message(msg)
+            logger.info(f"Sent OTP email to {to_email}")
+        except Exception as e:
+            logger.error(f"Failed to send OTP email: {e}")
+
+    @staticmethod
+    def initiate_password_reset(email: str):
+        """Generate and store OTP for given email (if exists)."""
+        try:
+            user = DatabaseOperations.execute_query(
+                UserQueries.GET_USER_BY_EMAIL,
+                (email,),
+                fetch_one=True
+            )
+            if not user:
+                return  # silent
+            otp = AuthService._generate_otp()
+            expires = datetime.utcnow() + timedelta(minutes=10)
+            DatabaseOperations.execute_update(
+                UserQueries.SET_RESET_OTP,
+                (otp, expires, user['userID'])
+            )
+            AuthService._send_otp_email(email, otp)
+            logger.info(f"OTP generated for user {user['userID']}")
+        except Exception as e:
+            logger.error(f"initiate_password_reset error: {e}")
+
+    @staticmethod
+    def reset_password_with_otp(email: str, otp: str, new_password: str) -> bool:
+        try:
+            user = DatabaseOperations.execute_query(
+                UserQueries.GET_USER_BY_EMAIL,
+                (email,),
+                fetch_one=True
+            )
+            if not user:
+                return False
+            stored_otp = user.get('reset_token')
+            expires = user.get('reset_expires')
+            if not stored_otp or stored_otp != otp:
+                return False
+            if not expires or datetime.utcnow() > expires:
+                return False
+            hashed = PasswordHandler.hash_password(new_password)
+            DatabaseOperations.execute_update(
+                UserQueries.UPDATE_PASSWORD_AND_CLEAR_OTP,
+                (hashed, user['userID'])
+            )
+            logger.info(f"Password reset for user {user['userID']}")
+            return True
+        except Exception as e:
+            logger.error(f"reset_password_with_otp error: {e}")
+            return False
     
     @staticmethod
     def create_user(user_data: Dict[str, Any]) -> Optional[int]:
