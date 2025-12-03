@@ -67,33 +67,91 @@ const DashboardPage = () => {
 
     try {
       setLoading(true);
-      const branchID = user.branchID || 1; // Default to branch 1 if not set
+      // For admin users (no branchID), fetch data from all branches
+      // For other users, use their specific branch
+      const isAdmin = user.userRole === "Admin" && !user.branchID;
+      const branchID = user.branchID || (isAdmin ? null : 1);
+
       console.log(
         "Fetching dashboard stats for branch:",
         branchID,
         "User:",
-        user
+        user,
+        "IsAdmin:",
+        isAdmin
       );
 
-      // Fetch all data in parallel with individual error handling
-      const [rooms, checkIns, checkOuts, pendingInvoices] = await Promise.all([
-        roomService.getRoomsByBranch(branchID).catch((err) => {
-          console.error("Failed to fetch rooms:", err);
-          return [];
-        }),
-        bookingService.getTodaysCheckIns(branchID).catch((err) => {
-          console.error("Failed to fetch check-ins:", err);
-          return [];
-        }),
-        bookingService.getTodaysCheckOuts(branchID).catch((err) => {
-          console.error("Failed to fetch check-outs:", err);
-          return [];
-        }),
-        billingService.getPendingInvoices(branchID).catch((err) => {
-          console.error("Failed to fetch invoices:", err);
-          return [];
-        }),
-      ]);
+      let rooms = [];
+      let checkIns = [];
+      let checkOuts = [];
+      let pendingInvoices = [];
+
+      if (isAdmin) {
+        // For admin, fetch data from all branches and aggregate
+        const [branch1Rooms, branch2Rooms, branch3Rooms] = await Promise.all([
+          roomService.getRoomsByBranch(1).catch(() => []),
+          roomService.getRoomsByBranch(2).catch(() => []),
+          roomService.getRoomsByBranch(3).catch(() => []),
+        ]);
+        rooms = [...branch1Rooms, ...branch2Rooms, ...branch3Rooms];
+
+        const [branch1CheckIns, branch2CheckIns, branch3CheckIns] =
+          await Promise.all([
+            bookingService.getTodaysCheckIns(1).catch(() => []),
+            bookingService.getTodaysCheckIns(2).catch(() => []),
+            bookingService.getTodaysCheckIns(3).catch(() => []),
+          ]);
+        checkIns = [...branch1CheckIns, ...branch2CheckIns, ...branch3CheckIns];
+
+        const [branch1CheckOuts, branch2CheckOuts, branch3CheckOuts] =
+          await Promise.all([
+            bookingService.getTodaysCheckOuts(1).catch(() => []),
+            bookingService.getTodaysCheckOuts(2).catch(() => []),
+            bookingService.getTodaysCheckOuts(3).catch(() => []),
+          ]);
+        checkOuts = [
+          ...branch1CheckOuts,
+          ...branch2CheckOuts,
+          ...branch3CheckOuts,
+        ];
+
+        const [branch1Invoices, branch2Invoices, branch3Invoices] =
+          await Promise.all([
+            billingService.getPendingInvoices(1).catch(() => []),
+            billingService.getPendingInvoices(2).catch(() => []),
+            billingService.getPendingInvoices(3).catch(() => []),
+          ]);
+        pendingInvoices = [
+          ...branch1Invoices,
+          ...branch2Invoices,
+          ...branch3Invoices,
+        ];
+      } else {
+        // For non-admin users, fetch data for their specific branch
+        const [roomsData, checkInsData, checkOutsData, pendingInvoicesData] =
+          await Promise.all([
+            roomService.getRoomsByBranch(branchID).catch((err) => {
+              console.error("Failed to fetch rooms:", err);
+              return [];
+            }),
+            bookingService.getTodaysCheckIns(branchID).catch((err) => {
+              console.error("Failed to fetch check-ins:", err);
+              return [];
+            }),
+            bookingService.getTodaysCheckOuts(branchID).catch((err) => {
+              console.error("Failed to fetch check-outs:", err);
+              return [];
+            }),
+            billingService.getPendingInvoices(branchID).catch((err) => {
+              console.error("Failed to fetch invoices:", err);
+              return [];
+            }),
+          ]);
+        rooms = roomsData;
+        checkIns = checkInsData;
+        checkOuts = checkOutsData;
+        pendingInvoices = pendingInvoicesData;
+      }
 
       console.log("Dashboard data:", {
         rooms,
@@ -108,16 +166,29 @@ const DashboardPage = () => {
         (r) => r.roomStatus === "Occupied"
       ).length;
 
+      // Calculate monthly revenue properly
+      const monthlyRevenue = pendingInvoices.reduce((sum, inv) => {
+        const amount = parseFloat(inv.totalAmount);
+        console.log(
+          "Invoice amount:",
+          inv.totalAmount,
+          "Parsed:",
+          amount,
+          "Type:",
+          typeof inv.totalAmount
+        );
+        return sum + (isNaN(amount) ? 0 : amount);
+      }, 0);
+
+      console.log("Total monthly revenue calculated:", monthlyRevenue);
+
       setStats({
         totalRooms,
         occupiedRooms,
         todayCheckIns: checkIns.length,
         todayCheckOuts: checkOuts.length,
         pendingInvoices: pendingInvoices.length,
-        monthlyRevenue: pendingInvoices.reduce(
-          (sum, inv) => sum + (inv.totalAmount || 0),
-          0
-        ),
+        monthlyRevenue,
       });
     } catch (error: any) {
       console.error("Error fetching dashboard stats:", error);
@@ -131,7 +202,8 @@ const DashboardPage = () => {
     if (!user) return;
 
     try {
-      const branchID = user.branchID || 1;
+      const isAdmin = user.userRole === "Admin" && !user.branchID;
+      const branchID = user.branchID || (isAdmin ? null : 1);
 
       // First try to get real activity logs
       const activityLogs = await bookingService
@@ -155,12 +227,38 @@ const DashboardPage = () => {
       }
 
       // Fallback: Construct activities from existing data
-      const [recentBookings, todaysCheckIns, todaysCheckOuts] =
-        await Promise.all([
-          bookingService.getBookings({ page: 1, page_size: 5 }).catch(() => []), // Get 5 recent bookings
+      let recentBookings = [];
+      let todaysCheckIns = [];
+      let todaysCheckOuts = [];
+
+      if (isAdmin) {
+        // For admin, get recent activities from all branches
+        const [allBookings, allCheckIns, allCheckOuts] = await Promise.all([
+          bookingService.getBookings({ page: 1, page_size: 5 }).catch(() => []),
+          Promise.all([
+            bookingService.getTodaysCheckIns(1).catch(() => []),
+            bookingService.getTodaysCheckIns(2).catch(() => []),
+            bookingService.getTodaysCheckIns(3).catch(() => []),
+          ]).then((results) => results.flat()),
+          Promise.all([
+            bookingService.getTodaysCheckOuts(1).catch(() => []),
+            bookingService.getTodaysCheckOuts(2).catch(() => []),
+            bookingService.getTodaysCheckOuts(3).catch(() => []),
+          ]).then((results) => results.flat()),
+        ]);
+        recentBookings = allBookings;
+        todaysCheckIns = allCheckIns;
+        todaysCheckOuts = allCheckOuts;
+      } else {
+        const [bookings, checkIns, checkOuts] = await Promise.all([
+          bookingService.getBookings({ page: 1, page_size: 5 }).catch(() => []),
           bookingService.getTodaysCheckIns(branchID).catch(() => []),
           bookingService.getTodaysCheckOuts(branchID).catch(() => []),
         ]);
+        recentBookings = bookings;
+        todaysCheckIns = checkIns;
+        todaysCheckOuts = checkOuts;
+      }
 
       const activities: RecentActivity[] = [];
 
@@ -316,7 +414,10 @@ const DashboardPage = () => {
     },
     {
       title: "Monthly Revenue",
-      value: `LKR ${stats.monthlyRevenue.toLocaleString()}`,
+      value: `LKR ${(stats.monthlyRevenue || 0).toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`,
       icon: <DollarSign className="text-yellow-600" size={24} />,
       bgColor: "bg-yellow-50",
       subtitle: "This month",

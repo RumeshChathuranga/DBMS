@@ -384,7 +384,9 @@ class InvoiceQueries:
     """
     
     GET_PENDING_INVOICES = """
-        SELECT i.invoiceID, i.bookingID, i.invoiceStatus,
+        SELECT i.invoiceID, i.bookingID, i.policyID, i.discountCode, 
+               i.paymentPlan, i.roomCharges, i.serviceCharges, 
+               i.taxAmount, i.discountAmount, i.settledAmount, i.invoiceStatus,
                (i.roomCharges + i.serviceCharges + i.taxAmount - i.discountAmount) as totalAmount,
                (i.roomCharges + i.serviceCharges + i.taxAmount - i.discountAmount - i.settledAmount) as balanceDue,
                g.firstName, g.lastName, g.phone,
